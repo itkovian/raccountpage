@@ -1,9 +1,17 @@
 [package]
-name = "raccountpage"
-version = "0.1.0"
 authors = ["Andy Georges <itkovian@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+name = "raccountpage"
+version = "0.1.0"
 
 [dependencies]
+chrono = "0.4.11"
+fern = "0.6.0"
+restson = "0.6.0"
+dotenv = "0.15.0"
+serde = "1.0.106"
+serde_derive = "1.0.106"
+hyper = "0.13.5"
+hyper-tls = "0.4.1"
+clap = "2.33.0"
+
