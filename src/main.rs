@@ -1,82 +1,156 @@
-use dotenv::dotenv;
+/*
+Copyright 2019 Andy Georges <itkovian+sarchive@gmail.com>
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+use clap::{App, Arg, ArgMatches, SubCommand};
+use dotenv::dotenv;
 use hyper::client::Client;
 use hyper_tls::HttpsConnector;
-use restson::{RestClient,RestPath,Error};
-use serde_derive::{Deserialize, Serialize};
+use log::{error, info, LevelFilter};
+use restson::{Error, RestClient};
+use std::path::{Path, PathBuf};
+
+mod entities;
+
+use entities::{Account, process_account};
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(test))]
-fn get_client() -> RestClient {
-
+fn get_client(token: &str) -> RestClient {
     let api_url = dotenv::var("API_URL").unwrap();
 
     let https = HttpsConnector::new();
-    let client = Client::builder()
-        .build::<_, hyper::Body>(https);
-
-    println!("Using the URL {}", &api_url);
-
+    let client = Client::builder().build::<_, hyper::Body>(https);
 
     let mut restclient = RestClient::builder()
         .with_client(client)
         .build(&api_url)
         .unwrap();
 
-    restclient.set_header("Authorization", "Bearer ").unwrap();
-    restclient.set_header("Content-Type", "application/json").unwrap();
+    restclient
+        .set_header("Authorization", &format!("Bearer {}", token))
+        .unwrap();
+    restclient
+        .set_header("Content-Type", "application/json")
+        .unwrap();
 
     restclient
 }
 
 #[cfg(test)]
-fn get_client() -> RestClient {
+fn get_client(_: &str) -> RestClient {
     let api_url = dotenv::var("API_URL_TEST").unwrap();
     RestClient::new(&api_url).unwrap()
 }
-#[derive(Serialize,Deserialize, Debug)]
-struct Institute {
-    name: String
+
+fn setup_logging(debug: bool, logfile: Option<&str>) -> Result<(), log::SetLoggerError> {
+    let level_filter = if debug {
+        LevelFilter::Debug
+    } else {
+        LevelFilter::Info
+    };
+
+    let base_config = fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "[{}][{}][{}] {}",
+                chrono::Local::now().to_rfc3339(),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(level_filter);
+
+    match logfile {
+        Some(filename) => {
+            let r = fern::log_file(&PathBuf::from(filename)).unwrap();
+            base_config.chain(r)
+        }
+        None => base_config.chain(std::io::stdout()),
+    }
+    .apply()
 }
 
-#[derive(Serialize,Deserialize, Debug)]
-struct Person {
-    gecos: String,
-    institute: Institute,
-    institute_login: String,
-    realeppn: String,
+fn args<'a>() -> ArgMatches<'a> {
+    let matches = App::new("RAccountpage")
+        .version(VERSION)
+        .author("Andy Georges <itkovian+raccountpage@gmail.com>")
+        .about("CLI for chatting to the VSC REST API.")
+        .arg(
+            Arg::with_name("debug")
+                .long("debug")
+                .help("Log at DEBUG level."),
+        )
+        .arg(
+            Arg::with_name("token")
+                .long("token")
+                .takes_value(true)
+                .help("Ouath Bearer Token"),
+        )
+        .subcommand(
+            SubCommand::with_name("account")
+                .arg(
+                    Arg::with_name("all")
+                        .long("all")
+                        .help("Get information for all accounts"),
+                )
+                .arg(
+                    Arg::with_name("modified")
+                        .long("modified")
+                        .takes_value(true)
+                        .help("Get accounts that have been modified since YYYYMMDDHHMM")
+                )
+                .arg(
+                    Arg::with_name("vscid")
+                        .long("vscid")
+                        .takes_value(true)
+                        .help("The VSC id of the thing we need to fetch"),
+                )
+                .about("Request account information"),
+        );
+
+    matches.get_matches()
 }
 
-#[derive(Serialize,Deserialize,Debug)]
-struct Account {
-    vsc_id: String,
-    status: String,
-    isactive: bool,
-    force_active: bool,
-    expiry_date: Option<String>,
-    grace_until: Option<String>,
-    vsc_id_number: u64,
-    home_directory: String,
-    data_directory: String,
-    scratch_directory: String,
-    login_shell: String,
-    broken: bool,
-    email: String,
-    research_field: Vec<String>,
-    create_timestamp: String,
-    person: Person,
-    home_on_scratch: bool
-}
 
-impl RestPath<&str> for Account {
-    fn get_path(vsc_id: &str) -> Result<String, Error> { Ok(String::from(format!("django/api/account/{}/", vsc_id))) }
-}
-
-fn main() {
+fn main() -> Result<(), Error> {
     dotenv().ok();
+    let matches = args();
+    match setup_logging(matches.is_present("debug"), None) {
+        Ok(_) => (),
+        Err(e) => panic!("Cannot set up logging: {:?}", e),
+    };
+    let token = matches.value_of("token").unwrap();
+    let mut client = get_client(token);
 
-    let mut client = get_client();
+    let result = match matches.subcommand() {
+        ("account", Some(command_matches)) => process_account(&mut client, command_matches),
+        _ => Ok(String::from("oops"))
+    };
 
-    let account : Account = client.get("vsc40075").unwrap();
-
-    println!("Account: {:?}", account);
+    match result {
+        Ok(v) => println!("{}", v),
+        _ => println!("bummer")
+    }
+    Ok(())
 }
