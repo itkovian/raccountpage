@@ -26,12 +26,11 @@ use hyper::client::Client;
 use hyper_tls::HttpsConnector;
 use log::{error, info, LevelFilter};
 use restson::{Error, RestClient};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 mod entities;
 
 use entities::account;
-use entities::account::{Account, process_account};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -125,7 +124,7 @@ fn main() -> Result<(), Error> {
     let mut client = get_client(token);
 
     let result = match matches.subcommand() {
-        ("account", Some(command_matches)) => process_account(&mut client, command_matches),
+        ("account", Some(command_matches)) => account::process_account(&mut client, command_matches),
         _ => Ok(String::from("oops"))
     };
 

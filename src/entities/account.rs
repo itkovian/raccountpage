@@ -36,6 +36,18 @@ pub fn clap_subcommand(command: &str) -> App {
                 .help("Get information for all accounts"),
         )
         .arg(
+            Arg::with_name("institute")
+                .long("institute")
+                .takes_value(true)
+                .help("Limit query to the given institute"),
+        )
+        .arg(
+            Arg::with_name("institute login")
+                .long("login")
+                .takes_value(true)
+                .help("User login at the home institute"),
+        )
+        .arg(
             Arg::with_name("modified")
                 .long("modified")
                 .takes_value(true)
@@ -118,7 +130,7 @@ impl RestPath<&str> for Account {
 impl RestPath<(&str, &str)> for Account {
     fn get_path((institute, institute_id): (&str, &str)) -> Result<String, Error> {
         Ok(String::from(format!(
-            "django/api/account/institue/{}/id/{}",
+            "django/api/account/institute/{}/id/{}",
             institute, institute_id
         )))
     }
@@ -131,15 +143,24 @@ pub fn process_account(
 ) -> Result<String, serde_json::error::Error> {
     if matches.is_present("all") {
         let accounts: Accounts = client.get(()).unwrap();
-        to_string_pretty(&accounts)
-    } else if let Some(timestamp) = matches.value_of("modified") {
-        let accounts: Accounts = client.get(timestamp).unwrap();
-        to_string_pretty(&accounts)
-    } else {
-        let vsc_id = matches
-            .value_of("vscid")
-            .expect("You should provide a vsc id if not getting all account info");
-        let account: Account = client.get(vsc_id).unwrap();
-        to_string_pretty(&account)
+        return to_string_pretty(&accounts);
     }
+
+    if let Some(institute) = matches.value_of("institute") {
+        if let Some(login) = matches.value_of("institute login") {
+            let account: Account = client.get((institute, login)).unwrap();
+            return to_string_pretty(&account);
+        }
+    }
+
+    if let Some(timestamp) = matches.value_of("modified") {
+        let accounts: Accounts = client.get(timestamp).unwrap();
+        return to_string_pretty(&accounts);
+    }
+
+    let vsc_id = matches
+        .value_of("vscid")
+        .expect("You should provide a vsc id if not getting non-specific account info");
+    let account: Account = client.get(vsc_id).unwrap();
+    to_string_pretty(&account)
 }
