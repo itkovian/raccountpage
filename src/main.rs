@@ -30,7 +30,8 @@ use std::path::{Path, PathBuf};
 
 mod entities;
 
-use entities::{Account, process_account};
+use entities::account;
+use entities::account::{Account, process_account};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -107,27 +108,7 @@ fn args<'a>() -> ArgMatches<'a> {
                 .takes_value(true)
                 .help("Ouath Bearer Token"),
         )
-        .subcommand(
-            SubCommand::with_name("account")
-                .arg(
-                    Arg::with_name("all")
-                        .long("all")
-                        .help("Get information for all accounts"),
-                )
-                .arg(
-                    Arg::with_name("modified")
-                        .long("modified")
-                        .takes_value(true)
-                        .help("Get accounts that have been modified since YYYYMMDDHHMM")
-                )
-                .arg(
-                    Arg::with_name("vscid")
-                        .long("vscid")
-                        .takes_value(true)
-                        .help("The VSC id of the thing we need to fetch"),
-                )
-                .about("Request account information"),
-        );
+        .subcommand(account::clap_subcommand("account"));
 
     matches.get_matches()
 }
