@@ -25,6 +25,7 @@ use restson::{Error, RestClient, RestPath};
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use serde_json::to_string_pretty;
+use std::fmt;
 
 // ---------------------------------------------------------------
 /// Command line options for account
@@ -102,6 +103,40 @@ pub struct Account {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Accounts(pub Vec<Account>);
 
+// ---------------------------------------------------------------
+// data types for argument specification
+
+struct VscIDA(String);
+impl fmt::Display for VscIDA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+struct TimeStampA(String);
+impl fmt::Display for TimeStampA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+struct InstituteA(String);
+impl fmt::Display for InstituteA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+struct InstituteLoginA(String);
+impl fmt::Display for InstituteLoginA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+// ---------------------------------------------------------------
+// API calls
+
 /// Retrieve all accounts
 impl RestPath<()> for Accounts {
     fn get_path(_: ()) -> Result<String, Error> {
@@ -110,8 +145,8 @@ impl RestPath<()> for Accounts {
 }
 
 /// Retrieve all accounts modified since a given timestamp
-impl RestPath<&str> for Accounts {
-    fn get_path(timestamp: &str) -> Result<String, Error> {
+impl RestPath<&TimeStampA> for Accounts {
+    fn get_path(timestamp: &TimeStampA) -> Result<String, Error> {
         Ok(String::from(format!(
             "django/api/account/modified/{}",
             timestamp
@@ -120,15 +155,15 @@ impl RestPath<&str> for Accounts {
 }
 
 /// Retrieve an account with the given VSC ID
-impl RestPath<&str> for Account {
-    fn get_path(vsc_id: &str) -> Result<String, Error> {
+impl RestPath<&VscIDA> for Account {
+    fn get_path(vsc_id: &VscIDA) -> Result<String, Error> {
         Ok(String::from(format!("django/api/account/{}/", vsc_id)))
     }
 }
 
-/// Retrieve an account with the given institute and institue login
-impl RestPath<(&str, &str)> for Account {
-    fn get_path((institute, institute_id): (&str, &str)) -> Result<String, Error> {
+/// Retrieve an account with the given institute and institute login
+impl RestPath<(&InstituteA, &InstituteLoginA)> for Account {
+    fn get_path((institute, institute_id): (&InstituteA, &InstituteLoginA)) -> Result<String, Error> {
         Ok(String::from(format!(
             "django/api/account/institute/{}/id/{}",
             institute, institute_id
@@ -148,19 +183,19 @@ pub fn process_account(
 
     if let Some(institute) = matches.value_of("institute") {
         if let Some(login) = matches.value_of("institute login") {
-            let account: Account = client.get((institute, login)).unwrap();
+            let account: Account = client.get((&InstituteA(institute.to_string()), &InstituteLoginA(login.to_string()))).unwrap();
             return to_string_pretty(&account);
         }
     }
 
     if let Some(timestamp) = matches.value_of("modified") {
-        let accounts: Accounts = client.get(timestamp).unwrap();
+        let accounts: Accounts = client.get(&TimeStampA(timestamp.to_string())).unwrap();
         return to_string_pretty(&accounts);
     }
 
     let vsc_id = matches
         .value_of("vscid")
         .expect("You should provide a vsc id if not getting non-specific account info");
-    let account: Account = client.get(vsc_id).unwrap();
+    let account: Account = client.get(&VscIDA(vsc_id.to_string())).unwrap();
     to_string_pretty(&account)
 }
