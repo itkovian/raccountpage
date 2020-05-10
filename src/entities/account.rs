@@ -27,6 +27,8 @@ use serde_json;
 use serde_json::to_string_pretty;
 use std::fmt;
 
+use super::{Institute, Status};
+
 // ---------------------------------------------------------------
 /// Command line options for account
 pub fn clap_subcommand(command: &str) -> App {
@@ -67,12 +69,7 @@ pub fn clap_subcommand(command: &str) -> App {
 // data types of retrieved data
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Institute {
-    name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Person {
+struct Person {
     gecos: String,
     institute: Institute,
     institute_login: String,
@@ -80,9 +77,9 @@ pub struct Person {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Account {
+struct Account {
     vsc_id: String,
-    status: String,
+    status: Status,
     isactive: bool,
     force_active: bool,
     expiry_date: Option<String>,

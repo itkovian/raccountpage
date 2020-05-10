@@ -31,6 +31,7 @@ use std::path::PathBuf;
 mod entities;
 
 use entities::account;
+use entities::vo;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -107,7 +108,8 @@ fn args<'a>() -> ArgMatches<'a> {
                 .takes_value(true)
                 .help("Ouath Bearer Token"),
         )
-        .subcommand(account::clap_subcommand("account"));
+        .subcommand(account::clap_subcommand("account"))
+        .subcommand(vo::clap_subcommand("vo"));
 
     matches.get_matches()
 }
@@ -125,6 +127,7 @@ fn main() -> Result<(), Error> {
 
     let result = match matches.subcommand() {
         ("account", Some(command_matches)) => account::process_account(&mut client, command_matches),
+        ("vo", Some(command_matches)) => vo::process_vo(&mut client, command_matches),
         _ => Ok(String::from("oops"))
     };
 

@@ -21,3 +21,24 @@ SOFTWARE.
 */
 
 pub mod account;
+pub mod vo;
+
+use serde_derive::{Deserialize, Serialize};
+
+
+// ---------------------------------------------------------------
+// Common data types returned by the API
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Institute {
+    name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+enum Status {
+    active,
+    inactive,
+    modified,
+    new
+}
+
