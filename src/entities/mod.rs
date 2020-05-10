@@ -24,6 +24,7 @@ pub mod account;
 pub mod vo;
 
 use serde_derive::{Deserialize, Serialize};
+use std::fmt;
 
 
 // ---------------------------------------------------------------
@@ -42,3 +43,25 @@ enum Status {
     new
 }
 
+// ---------------------------------------------------------------
+// data types for argument specification
+struct VscIDA(String);
+impl fmt::Display for VscIDA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+struct TimeStampA(String);
+impl fmt::Display for TimeStampA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+struct InstituteA(String);
+impl fmt::Display for InstituteA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}

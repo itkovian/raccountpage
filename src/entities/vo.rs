@@ -28,6 +28,7 @@ use serde_json::to_string_pretty;
 use std::fmt;
 
 use super::{Institute, Status};
+use super::{VscIDA, InstituteA, TimeStampA};
 
 // ---------------------------------------------------------------
 /// Command line options for account
@@ -83,14 +84,19 @@ struct VirtualOrganisations(pub Vec<VirtualOrganisation>);
 // ---------------------------------------------------------------
 // API calls
 
-/// Retrieve all accounts
+/// Retrieve all vos
 impl RestPath<()> for VirtualOrganisations {
     fn get_path(_: ()) -> Result<String, Error> {
         Ok(String::from(format!("django/api/vo/")))
     }
 }
 
-
+/// Retrieve a single VO
+impl RestPath<&VscIDA> for VirtualOrganisation {
+    fn get_path(vscid: &VscIDA) -> Result<String, Error> {
+        Ok(String::from(format!("django/api/vo/{}", vscid)))
+    }
+}
 
 
 /// Process the command options and retirieve the data accordingly
@@ -104,7 +110,9 @@ pub fn process_vo(
         return to_string_pretty(&vos);
     }
 
-    todo!();
-
-
+    let vsc_id = matches
+        .value_of("vscid")
+        .expect("You should provide a vsc id if not getting non-specific account info");
+    let vo : VirtualOrganisation = client.get(&VscIDA(vsc_id.to_string())).unwrap();
+    return to_string_pretty(&vo);
 }

@@ -28,6 +28,7 @@ use serde_json::to_string_pretty;
 use std::fmt;
 
 use super::{Institute, Status};
+use super::{VscIDA, InstituteA, TimeStampA};
 
 // ---------------------------------------------------------------
 /// Command line options for account
@@ -103,26 +104,7 @@ struct Accounts(pub Vec<Account>);
 // ---------------------------------------------------------------
 // data types for argument specification
 
-struct VscIDA(String);
-impl fmt::Display for VscIDA {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
 
-struct TimeStampA(String);
-impl fmt::Display for TimeStampA {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-struct InstituteA(String);
-impl fmt::Display for InstituteA {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
 
 struct InstituteLoginA(String);
 impl fmt::Display for InstituteLoginA {
