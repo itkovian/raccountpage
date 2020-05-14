@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Andy Georges <itkovian+sarchive@gmail.com>
+Copyright 2019 Andy Georges <itkovian+raccountpage@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,12 @@ use hyper::client::Client;
 use hyper_tls::HttpsConnector;
 use log::{error, info, LevelFilter};
 use restson::{Error, RestClient};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 mod entities;
 
-use entities::{Account, process_account};
+use entities::account;
+use entities::vo;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -107,27 +108,8 @@ fn args<'a>() -> ArgMatches<'a> {
                 .takes_value(true)
                 .help("Ouath Bearer Token"),
         )
-        .subcommand(
-            SubCommand::with_name("account")
-                .arg(
-                    Arg::with_name("all")
-                        .long("all")
-                        .help("Get information for all accounts"),
-                )
-                .arg(
-                    Arg::with_name("modified")
-                        .long("modified")
-                        .takes_value(true)
-                        .help("Get accounts that have been modified since YYYYMMDDHHMM")
-                )
-                .arg(
-                    Arg::with_name("vscid")
-                        .long("vscid")
-                        .takes_value(true)
-                        .help("The VSC id of the thing we need to fetch"),
-                )
-                .about("Request account information"),
-        );
+        .subcommand(account::clap_subcommand("account"))
+        .subcommand(vo::clap_subcommand("vo"));
 
     matches.get_matches()
 }
@@ -144,7 +126,8 @@ fn main() -> Result<(), Error> {
     let mut client = get_client(token);
 
     let result = match matches.subcommand() {
-        ("account", Some(command_matches)) => process_account(&mut client, command_matches),
+        ("account", Some(command_matches)) => account::process_account(&mut client, command_matches),
+        ("vo", Some(command_matches)) => vo::process_vo(&mut client, command_matches),
         _ => Ok(String::from("oops"))
     };
 

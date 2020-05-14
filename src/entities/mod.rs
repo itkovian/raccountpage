@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Andy Georges <itkovian+sarchive@gmail.com>
+Copyright 2019 Andy Georges <itkovian+raccountpage@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,11 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use clap::{ArgMatches};
-use restson::{Error, RestClient, RestPath};
+pub mod account;
+pub mod vo;
+
 use serde_derive::{Deserialize, Serialize};
-use serde_json;
-use serde_json::to_string_pretty;
+use std::fmt;
+
+
+// ---------------------------------------------------------------
+// Common data types returned by the API
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Institute {
@@ -32,69 +36,32 @@ struct Institute {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Person {
-    gecos: String,
-    institute: Institute,
-    institute_login: String,
-    realeppn: String,
+enum Status {
+    active,
+    inactive,
+    modified,
+    new
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Account {
-    vsc_id: String,
-    status: String,
-    isactive: bool,
-    force_active: bool,
-    expiry_date: Option<String>,
-    grace_until: Option<String>,
-    vsc_id_number: u64,
-    home_directory: String,
-    data_directory: String,
-    scratch_directory: String,
-    login_shell: String,
-    broken: bool,
-    email: String,
-    research_field: Vec<String>,
-    create_timestamp: String,
-    person: Person,
-    home_on_scratch: bool,
-}
-
-#[derive(Serialize,Deserialize,Debug,Clone)]
-struct Accounts ( pub Vec<Account> );
-
-impl RestPath<()> for Accounts {
-    fn get_path(_: ()) -> Result<String, Error> {
-        Ok(String::from(format!("django/api/account/")))
+// ---------------------------------------------------------------
+// data types for argument specification
+struct VscIDA(String);
+impl fmt::Display for VscIDA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
-impl RestPath<&str> for Accounts {
-    fn get_path(timestamp: &str) -> Result<String, Error> {
-        Ok(String::from(format!("django/api/account/modified/{}", timestamp)))
+struct TimeStampA(String);
+impl fmt::Display for TimeStampA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
-impl RestPath<&str> for Account {
-    fn get_path(vsc_id: &str) -> Result<String, Error> {
-        Ok(String::from(format!("django/api/account/{}/", vsc_id)))
-    }
-}
-
-pub fn process_account(client: &mut RestClient, matches: &ArgMatches) -> Result<String, serde_json::error::Error> {
-    if matches.is_present("all") {
-        let accounts : Accounts = client.get(()).unwrap();
-        to_string_pretty(&accounts)
-    }
-    else if let Some(timestamp) = matches.value_of("modified") {
-        let accounts : Accounts = client.get(timestamp).unwrap();
-        //println!("Accounts: {:?}", accounts);
-        to_string_pretty(&accounts)
-    }
-    else {
-        let vsc_id = matches.value_of("vscid").expect("You should provide a vsc id if not getting all account info");
-        let account: Account = client.get(vsc_id).unwrap();
-        //println!("Account: {:?}", account);
-        to_string_pretty(&account)
+struct InstituteA(String);
+impl fmt::Display for InstituteA {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
