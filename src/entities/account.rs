@@ -21,14 +21,18 @@ SOFTWARE.
 */
 
 use clap::{App, Arg, ArgMatches, SubCommand};
+use chrono;
+use chrono::{DateTime, FixedOffset};
+use chrono::naive::{NaiveDateTime};
 use restson::{Error, RestClient, RestPath};
 use serde_derive::{Deserialize, Serialize};
+use serde;
 use serde_json;
 use serde_json::to_string_pretty;
 use std::fmt;
 
-use super::{Institute, Status};
-use super::{VscIDA, InstituteA, TimeStampA};
+use crate::entities::{Institute, Status};
+use crate::entities::{VscIDA, InstituteA, TimeStampA};
 
 // ---------------------------------------------------------------
 /// Command line options for account
@@ -83,8 +87,8 @@ struct Account {
     status: Status,
     isactive: bool,
     force_active: bool,
-    expiry_date: Option<String>,
-    grace_until: Option<String>,
+    expiry_date: Option<DateTime<FixedOffset>>,
+    grace_until: Option<DateTime<FixedOffset>>,
     vsc_id_number: u64,
     home_directory: String,
     data_directory: String,
@@ -93,10 +97,11 @@ struct Account {
     broken: bool,
     email: String,
     research_field: Vec<String>,
-    create_timestamp: String,
+    create_timestamp: DateTime<FixedOffset>,
     person: Person,
     home_on_scratch: bool,
 }
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Accounts(pub Vec<Account>);

@@ -5,7 +5,7 @@ name = "raccountpage"
 version = "0.1.0"
 
 [dependencies]
-chrono = "0.4.11"
+chrono = { version = "0.4.11", features = ["serde"] }
 fern = { version="0.6.0", features=["reopen-03"] }
 restson = "0.6.0"
 dotenv = "0.15.0"
