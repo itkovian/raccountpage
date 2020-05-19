@@ -30,12 +30,12 @@ use std::fmt;
 // ---------------------------------------------------------------
 // Common data types returned by the API
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Institute {
     name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum Status {
     active,
     inactive,
