@@ -73,7 +73,7 @@ pub fn clap_subcommand(command: &str) -> App {
 // ---------------------------------------------------------------
 // data types of retrieved data
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Person {
     gecos: String,
     institute: Institute,
@@ -81,7 +81,7 @@ struct Person {
     realeppn: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct Account {
     vsc_id: String,
     status: Status,
@@ -182,4 +182,69 @@ pub fn process_account(
         .expect("You should provide a vsc id if not getting non-specific account info");
     let account: Account = client.get(&VscIDA(vsc_id.to_string())).unwrap();
     to_string_pretty(&account)
+}
+
+
+#[cfg(test)]
+mod test {
+
+    use chrono::{DateTime, NaiveDateTime, Utc};
+    use chrono::offset::FixedOffset;
+    use dotenv::dotenv;
+    use httpmock::Method::GET;
+    use httpmock::{mock, with_mock_server};
+    use restson::{Error, RestClient};
+
+    use super::{Account, Person};
+    use super::super::{Status, Institute, VscIDA};
+
+    fn get_client(_: &str) -> RestClient {
+        let api_url = dotenv::var("API_URL_TEST").unwrap();
+        RestClient::new(&api_url).unwrap()
+    }
+
+    #[test]
+    #[with_mock_server]
+    fn simple_test() {
+
+        let account = Account {
+            vsc_id: String::from("vsc40075"),
+            status: Status::active,
+            isactive: true,
+            force_active: true,
+            expiry_date: None,
+            grace_until: None,
+            vsc_id_number: 2678372,
+            home_directory: String::from("/home/me"),
+            data_directory: String::from("/data/me"),
+            scratch_directory: String::from("/scratch/me"),
+            login_shell: String::from("fish"),
+            broken: false,
+            email: String::from("me@myhome.org"),
+            research_field: vec![String::from("science")],
+            create_timestamp: DateTime::<FixedOffset>::from_utc(NaiveDateTime::from_timestamp(61, 0), FixedOffset::east(3600)),
+            person: Person {
+                gecos: String::from("mygecos"),
+                institute: Institute {
+                    name: String::from("myinst")
+                },
+                institute_login: String::from("me"),
+                realeppn: String::from("myeppn"),
+            },
+            home_on_scratch: false,
+        };
+
+        let search_mock = mock(GET, "/django/api/account/vsc40075/")
+           .return_status(200)
+           .return_json_body(&account)
+           .create();
+
+        let mut client = get_client("dummy");
+
+        let returned_account : Account = client.get(&VscIDA(String::from("vsc40075"))).unwrap();
+
+        assert_eq!(returned_account, account);
+    }
+
+
 }
