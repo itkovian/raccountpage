@@ -26,7 +26,6 @@ pub mod vo;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 
-
 // ---------------------------------------------------------------
 // Common data types returned by the API
 
@@ -40,7 +39,7 @@ enum Status {
     active,
     inactive,
     modified,
-    new
+    new,
 }
 
 // ---------------------------------------------------------------

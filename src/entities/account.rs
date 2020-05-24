@@ -20,19 +20,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use clap::{App, Arg, ArgMatches, SubCommand};
 use chrono;
+use chrono::naive::NaiveDateTime;
 use chrono::{DateTime, FixedOffset};
-use chrono::naive::{NaiveDateTime};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use restson::{Error, RestClient, RestPath};
-use serde_derive::{Deserialize, Serialize};
 use serde;
+use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use serde_json::to_string_pretty;
 use std::fmt;
 
 use crate::entities::{Institute, Status};
-use crate::entities::{VscIDA, InstituteA, TimeStampA};
+use crate::entities::{InstituteA, TimeStampA, VscIDA};
 
 // ---------------------------------------------------------------
 /// Command line options for account
@@ -102,14 +102,11 @@ struct Account {
     home_on_scratch: bool,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Accounts(pub Vec<Account>);
 
 // ---------------------------------------------------------------
 // data types for argument specification
-
-
 
 struct InstituteLoginA(String);
 impl fmt::Display for InstituteLoginA {
@@ -147,7 +144,9 @@ impl RestPath<&VscIDA> for Account {
 
 /// Retrieve an account with the given institute and institute login
 impl RestPath<(&InstituteA, &InstituteLoginA)> for Account {
-    fn get_path((institute, institute_id): (&InstituteA, &InstituteLoginA)) -> Result<String, Error> {
+    fn get_path(
+        (institute, institute_id): (&InstituteA, &InstituteLoginA),
+    ) -> Result<String, Error> {
         Ok(String::from(format!(
             "django/api/account/institute/{}/id/{}",
             institute, institute_id
@@ -167,7 +166,12 @@ pub fn process_account(
 
     if let Some(institute) = matches.value_of("institute") {
         if let Some(login) = matches.value_of("institute login") {
-            let account: Account = client.get((&InstituteA(institute.to_string()), &InstituteLoginA(login.to_string()))).unwrap();
+            let account: Account = client
+                .get((
+                    &InstituteA(institute.to_string()),
+                    &InstituteLoginA(login.to_string()),
+                ))
+                .unwrap();
             return to_string_pretty(&account);
         }
     }
@@ -184,19 +188,18 @@ pub fn process_account(
     to_string_pretty(&account)
 }
 
-
 #[cfg(test)]
 mod test {
 
-    use chrono::{DateTime, NaiveDateTime, Utc};
     use chrono::offset::FixedOffset;
+    use chrono::{DateTime, NaiveDateTime, Utc};
     use dotenv::dotenv;
     use httpmock::Method::GET;
     use httpmock::{mock, with_mock_server};
     use restson::{Error, RestClient};
 
+    use super::super::{Institute, Status, VscIDA};
     use super::{Account, Person};
-    use super::super::{Status, Institute, VscIDA};
 
     fn get_client(_: &str) -> RestClient {
         let api_url = dotenv::var("API_URL_TEST").unwrap();
@@ -206,7 +209,6 @@ mod test {
     #[test]
     #[with_mock_server]
     fn simple_test() {
-
         let account = Account {
             vsc_id: String::from("vsc40075"),
             status: Status::active,
@@ -222,11 +224,14 @@ mod test {
             broken: false,
             email: String::from("me@myhome.org"),
             research_field: vec![String::from("science")],
-            create_timestamp: DateTime::<FixedOffset>::from_utc(NaiveDateTime::from_timestamp(61, 0), FixedOffset::east(3600)),
+            create_timestamp: DateTime::<FixedOffset>::from_utc(
+                NaiveDateTime::from_timestamp(61, 0),
+                FixedOffset::east(3600),
+            ),
             person: Person {
                 gecos: String::from("mygecos"),
                 institute: Institute {
-                    name: String::from("myinst")
+                    name: String::from("myinst"),
                 },
                 institute_login: String::from("me"),
                 realeppn: String::from("myeppn"),
@@ -235,16 +240,14 @@ mod test {
         };
 
         let search_mock = mock(GET, "/django/api/account/vsc40075/")
-           .return_status(200)
-           .return_json_body(&account)
-           .create();
+            .return_status(200)
+            .return_json_body(&account)
+            .create();
 
         let mut client = get_client("dummy");
 
-        let returned_account : Account = client.get(&VscIDA(String::from("vsc40075"))).unwrap();
+        let returned_account: Account = client.get(&VscIDA(String::from("vsc40075"))).unwrap();
 
         assert_eq!(returned_account, account);
     }
-
-
 }

@@ -28,7 +28,7 @@ use serde_json::to_string_pretty;
 use std::fmt;
 
 use super::{Institute, Status};
-use super::{VscIDA, InstituteA, TimeStampA};
+use super::{InstituteA, TimeStampA, VscIDA};
 
 // ---------------------------------------------------------------
 /// Command line options for account
@@ -75,7 +75,7 @@ pub struct VirtualOrganisation {
     scratch_path: String,
     description: String,
     members: Vec<String>,
-    moderators: Vec<String>
+    moderators: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -98,13 +98,11 @@ impl RestPath<&VscIDA> for VirtualOrganisation {
     }
 }
 
-
 /// Process the command options and retirieve the data accordingly
 pub fn process_vo(
     client: &mut RestClient,
     matches: &ArgMatches,
 ) -> Result<String, serde_json::error::Error> {
-
     if matches.is_present("all") {
         let vos: VirtualOrganisations = client.get(()).unwrap();
         return to_string_pretty(&vos);
@@ -113,6 +111,6 @@ pub fn process_vo(
     let vsc_id = matches
         .value_of("vscid")
         .expect("You should provide a vsc id if not getting non-specific account info");
-    let vo : VirtualOrganisation = client.get(&VscIDA(vsc_id.to_string())).unwrap();
+    let vo: VirtualOrganisation = client.get(&VscIDA(vsc_id.to_string())).unwrap();
     return to_string_pretty(&vo);
 }

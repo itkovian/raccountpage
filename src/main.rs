@@ -114,7 +114,6 @@ fn args<'a>() -> ArgMatches<'a> {
     matches.get_matches()
 }
 
-
 fn main() -> Result<(), Error> {
     dotenv().ok();
     let matches = args();
@@ -126,14 +125,16 @@ fn main() -> Result<(), Error> {
     let mut client = get_client(token);
 
     let result = match matches.subcommand() {
-        ("account", Some(command_matches)) => account::process_account(&mut client, command_matches),
+        ("account", Some(command_matches)) => {
+            account::process_account(&mut client, command_matches)
+        }
         ("vo", Some(command_matches)) => vo::process_vo(&mut client, command_matches),
-        _ => Ok(String::from("oops"))
+        _ => Ok(String::from("oops")),
     };
 
     match result {
         Ok(v) => println!("{}", v),
-        _ => println!("bummer")
+        _ => println!("bummer"),
     }
     Ok(())
 }
