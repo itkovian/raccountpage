@@ -23,7 +23,6 @@ SOFTWARE.
 use clap::{App, Arg, ArgMatches, SubCommand};
 use restson::{Error, RestClient, RestPath};
 use serde_derive::{Deserialize, Serialize};
-use serde_json;
 use serde_json::to_string_pretty;
 use std::fmt;
 
@@ -112,5 +111,5 @@ pub fn process_vo(
         .value_of("vscid")
         .expect("You should provide a vsc id if not getting non-specific account info");
     let vo: VirtualOrganisation = client.get(&VscIDA(vsc_id.to_string())).unwrap();
-    return to_string_pretty(&vo);
+    to_string_pretty(&vo)
 }

@@ -20,16 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use chrono;
 use chrono::naive::NaiveDateTime;
 use chrono::{DateTime, FixedOffset};
 use clap::{App, Arg, ArgMatches, SubCommand};
 use restson::{Error, RestClient, RestPath};
-use serde;
 use serde_derive::{Deserialize, Serialize};
-use serde_json;
 use serde_json::to_string_pretty;
-use std::fmt;
 
 use crate::entities::{Institute, Status};
 use crate::entities::{InstituteA, TimeStampA, VscIDA};
