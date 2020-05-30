@@ -20,12 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use chrono::naive::NaiveDateTime;
+use chrono::naive::{NaiveDateTime, NaiveDate};
 use chrono::{DateTime, FixedOffset};
 use clap::{App, Arg, ArgMatches, SubCommand};
 use restson::{Error, RestClient, RestPath};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::to_string_pretty;
+use std::fmt;
 
 use crate::entities::{Institute, Status};
 use crate::entities::{InstituteA, TimeStampA, VscIDA};
@@ -83,8 +84,8 @@ struct Account {
     status: Status,
     isactive: bool,
     force_active: bool,
-    expiry_date: Option<DateTime<FixedOffset>>,
-    grace_until: Option<DateTime<FixedOffset>>,
+    expiry_date: Option<NaiveDate>,
+    grace_until: Option<NaiveDate>,
     vsc_id_number: u64,
     home_directory: String,
     data_directory: String,
