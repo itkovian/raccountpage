@@ -40,7 +40,9 @@ enum Status {
     active,
     inactive,
     modified,
-    new
+    new,
+    forceinactive,
+    forceactive
 }
 
 // ---------------------------------------------------------------
